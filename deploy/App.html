@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>revisionHistoryGrid</title>
+
+    <script type="text/javascript" src="/apps/2.0p5/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                Ext.define("CustomApp",{extend:"Rally.app.App",componentCls:"app",layout:{type:"hbox"},defaults:{padding:10},items:[{xtype:"container",itemId:"render_example",flex:1},{xtype:"container",itemId:"line_by_line_example",flex:1}],launch:function(){this._getSomeStories()},_getSomeStories:function(){this.render_grid&&this.render_grid.destroy(),this.line_grid&&this.line_grid.destroy(),Ext.create("Rally.data.WsapiDataStore",{autoLoad:!0,model:"User Story",filter:{property:"Parent",operator:"=",value:this.getContext().getProject().Name},fetch:["RevisionHistory","Revisions","FormattedID","Name","RevisionNumber","CreationDate","User","Description"],listeners:{load:function(store,data,success){this._showRenderedGrid(store),this._prepareLineByLineGrid(data)},scope:this}})},_revisionRenderer:function(value){var formatted_value_array=[];return value.Revisions&&Ext.Array.each(value.Revisions,function(rev){formatted_value_array.push(rev.RevisionNumber+" on "+rev.CreationDate+" by "+rev.User._refObjectName)}),formatted_value_array.join("<br/>")},_showRenderedGrid:function(store){this.render_grid&&this.render_grid.destroy(),this.render_grid=Ext.create("Rally.ui.grid.Grid",{store:store,columnCfgs:[{text:"ID",dataIndex:"FormattedID",xtype:"templatecolumn",tpl:Ext.create("Rally.ui.renderer.template.FormattedIDTemplate")},{text:"Name",dataIndex:"Name"},{text:"Revs",dataIndex:"RevisionHistory",renderer:this._revisionRenderer,flex:1}]}),this.down("#render_example").add(this.render_grid)},_prepareLineByLineGrid:function(data){var lines=[];Ext.Array.each(data,function(item){Ext.Array.each(item.get("RevisionHistory").Revisions,function(rev){var line={FormattedID:item.get("FormattedID"),Name:item.get("Name"),RevisionNumber:rev.RevisionNumber,RevisionDate:rev.CreationDate,RevisionAuthor:rev.User._refObjectName,RevisionDescription:rev.Description},stateChange=rev.Description.match("SCHEDULE STATE"),accepted=rev.Description.match("Accepted");stateChange&&accepted&&(console.log("state change: "+stateChange),console.log("Accepted: "+accepted),lines.push(line))})}),Ext.create("Rally.data.custom.Store",{autoLoad:!0,data:lines,listeners:{load:function(store,data,success){this._showLineByLineGrid(store)},scope:this}})},_showLineByLineGrid:function(store){this.line_grid&&this.line_grid.destroy(),this.line_grid=Ext.create("Rally.ui.grid.Grid",{store:store,columnCfgs:[{text:"ID",dataIndex:"FormattedID",xtype:"templatecolumn",tpl:Ext.create("Rally.ui.renderer.template.FormattedIDTemplate")},{text:"Name",dataIndex:"Name"},{text:"id",dataIndex:"RevisionNumber"},{text:"date",dataIndex:"RevisionDate",flex:1},{text:"author",dataIndex:"RevisionAuthor"},{text:"description",dataIndex:"RevisionDescription"}]}),this.down("#line_by_line_example").add(this.line_grid)}});
+
+            Rally.launchApp('CustomApp', {
+                name:"revisionHistoryGrid",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        .app {
+     /* Add app styles here */
+}
+
+    </style>
+</head>
+<body></body>
+</html>
